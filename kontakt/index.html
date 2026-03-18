@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kontakt – CrashTrace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap');
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; font-size: 16px; }
+
+      :root {
+        --bg:       #050810;
+        --bg2:      #090d1a;
+        --surface:  #0f1628;
+        --surface2: #151d35;
+        --border:   rgba(88, 101, 242, 0.2);
+        --accent:   #5865f2;
+        --accent2:  #00ffa3;
+        --accent3:  #ff4757;
+        --text:     #dde1f5;
+        --muted:    #6872a8;
+        --white:    #ffffff;
+        --font-head: 'Space Grotesk', sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+        --font-display: 'Bebas Neue', sans-serif;
+        --radius: 16px;
+        --tr: 0.25s cubic-bezier(.4,0,.2,1);
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-head);
+        line-height: 1.7;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+
+      /* Animated noise texture */
+      body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+        pointer-events: none; opacity: 0.5;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: var(--bg); }
+      ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+      h1,h2,h3,h4 { font-family: var(--font-head); line-height: 1.1; }
+      p { color: var(--muted); font-size: 1rem; }
+
+      .container { max-width: 1180px; margin: 0 auto; padding: 0 2rem; }
+      section { position: relative; z-index: 1; }
+
+      /* BUTTONS */
+      .btn {
+        display: inline-flex; align-items: center; gap: 10px;
+        font-family: var(--font-head); font-weight: 600; font-size: 0.9rem;
+        letter-spacing: 0.04em; padding: 0.85rem 2rem; border-radius: 10px;
+        border: none; cursor: pointer; transition: var(--tr); text-decoration: none;
+        position: relative; overflow: hidden;
+      }
+      .btn::after {
+        content: ''; position: absolute; inset: 0;
+        background: rgba(255,255,255,0.08);
+        opacity: 0; transition: var(--tr);
+      }
+      .btn:hover::after { opacity: 1; }
+      .btn-primary {
+        background: var(--accent); color: #fff;
+        box-shadow: 0 0 40px rgba(88,101,242,0.4);
+      }
+      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(88,101,242,0.6); }
+      .btn-ghost {
+        background: transparent; color: var(--text);
+        border: 1.5px solid rgba(88,101,242,0.3);
+      }
+      .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+      .btn-green {
+        background: var(--accent2); color: #050810; font-weight: 700;
+        box-shadow: 0 0 40px rgba(0,255,163,0.3);
+      }
+      .btn-green:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(0,255,163,0.5); }
+
+      /* LABEL */
+      .label {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500;
+        letter-spacing: 0.15em; text-transform: uppercase;
+        color: var(--accent2); margin-bottom: 1rem;
+      }
+      .label::before { content: '//'; color: var(--accent); margin-right: 2px; }
+
+      /* NAV */
+      nav {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+        padding: 1rem 0; transition: var(--tr);
+      }
+      nav.solid {
+        background: rgba(5,8,16,0.85);
+        backdrop-filter: blur(24px) saturate(180%);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-inner {
+        max-width: 1180px; margin: 0 auto; padding: 0 2rem;
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .nav-logo {
+        display: flex; align-items: center; gap: 12px; text-decoration: none;
+      }
+      .nav-logo img { height: 38px; width: auto; }
+      .nav-links { display: flex; align-items: center; gap: 0.2rem; list-style: none; }
+      .nav-links a {
+        font-size: 0.88rem; font-weight: 500; color: var(--muted);
+        text-decoration: none; padding: 0.45rem 1rem; border-radius: 8px;
+        transition: var(--tr); letter-spacing: 0.02em;
+      }
+      .nav-links a:hover { color: var(--white); background: rgba(88,101,242,0.1); }
+      .nav-links a.active { color: var(--accent2); }
+      .nav-right { display: flex; align-items: center; gap: 1rem; }
+      .lang-toggle {
+        display: flex; background: var(--surface); border: 1px solid var(--border);
+        border-radius: 8px; overflow: hidden;
+      }
+      .lang-btn {
+        font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600;
+        letter-spacing: 0.08em; padding: 0.4rem 0.8rem; border: none;
+        background: transparent; color: var(--muted); cursor: pointer; transition: var(--tr);
+      }
+      .lang-btn.active { background: var(--accent); color: #fff; }
+      .hamburger {
+        display: none; flex-direction: column; gap: 5px;
+        cursor: pointer; background: none; border: none; padding: 4px;
+      }
+      .hamburger span {
+        display: block; width: 24px; height: 2px;
+        background: var(--text); border-radius: 2px; transition: var(--tr);
+      }
+      .mobile-menu {
+        display: none; position: fixed; inset: 0;
+        background: rgba(5,8,16,0.97); z-index: 999;
+        flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+      }
+      .mobile-menu.open { display: flex; }
+      .mobile-menu a {
+        font-family: var(--font-head); font-size: 2rem; font-weight: 700;
+        color: var(--text); text-decoration: none; transition: var(--tr);
+      }
+      .mobile-menu a:hover { color: var(--accent2); }
+      .mobile-close {
+        position: absolute; top: 1.5rem; right: 2rem;
+        font-size: 2rem; color: var(--muted); background: none; border: none; cursor: pointer;
+      }
+
+      /* FOOTER */
+      footer {
+        background: var(--bg); border-top: 1px solid var(--border);
+        padding: 3rem 0 2rem; position: relative; z-index: 1;
+      }
+      .footer-inner {
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 1.5rem;
+      }
+      .footer-logo { display: flex; align-items: center; gap: 10px; }
+      .footer-logo img { height: 30px; }
+      .footer-links { display: flex; gap: 2rem; list-style: none; }
+      .footer-links a { font-size: 0.82rem; color: var(--muted); text-decoration: none; transition: var(--tr); }
+      .footer-links a:hover { color: var(--accent2); }
+      .footer-copy { font-size: 0.78rem; color: var(--muted); opacity: 0.6; }
+
+      /* LEGAL OVERLAY */
+      .legal-page {
+        display: none; position: fixed; inset: 0; z-index: 2000;
+        background: var(--bg); overflow-y: auto; padding: 5rem 0 4rem;
+      }
+      .legal-page.open { display: block; }
+      .legal-close {
+        position: fixed; top: 1.5rem; right: 2rem;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text); font-size: 1.1rem;
+        padding: 0.5rem 0.9rem; cursor: pointer; transition: var(--tr); z-index: 2001;
+      }
+      .legal-close:hover { background: var(--accent); color: #fff; }
+      .legal-content { max-width: 820px; margin: 0 auto; padding: 0 2rem; }
+      .legal-content h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--white); }
+      .legal-content h2 { font-size: 1.2rem; margin-top: 2.5rem; margin-bottom: 0.8rem; color: var(--accent2); }
+      .legal-content p, .legal-content li { font-size: 0.95rem; color: var(--muted); line-height: 1.8; margin-bottom: 0.8rem; }
+      .legal-content ul { padding-left: 1.5rem; }
+
+      /* REVEAL ANIMATION */
+      .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.65s ease, transform 0.65s ease; }
+      .reveal.in { opacity: 1; transform: translateY(0); }
+      .reveal-delay-1 { transition-delay: 0.1s; }
+      .reveal-delay-2 { transition-delay: 0.2s; }
+      .reveal-delay-3 { transition-delay: 0.3s; }
+
+      /* CARDS */
+      .card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 2rem; transition: var(--tr);
+        position: relative; overflow: hidden;
+      }
+      .card:hover { transform: translateY(-5px); border-color: rgba(88,101,242,0.45); }
+      .card::before {
+        content: ''; position: absolute; inset: 0;
+        background: radial-gradient(circle at 0% 0%, rgba(88,101,242,0.07), transparent 60%);
+        opacity: 0; transition: var(--tr);
+      }
+      .card:hover::before { opacity: 1; }
+
+      /* PAGE HERO */
+      .page-hero {
+        padding: 9rem 0 5rem; position: relative; overflow: hidden;
+      }
+      .page-hero-glow {
+        position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none;
+      }
+      .page-hero-glow-1 {
+        width: 600px; height: 600px;
+        background: rgba(88,101,242,0.15);
+        top: -200px; right: -150px;
+      }
+      .page-hero-glow-2 {
+        width: 400px; height: 400px;
+        background: rgba(0,255,163,0.08);
+        bottom: -100px; left: -100px;
+      }
+      .page-hero-content { position: relative; z-index: 1; }
+      .page-hero h1 {
+        font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 700;
+        color: var(--white); letter-spacing: -0.03em; margin-bottom: 1.2rem;
+      }
+      .page-hero h1 span { color: var(--accent2); }
+      .page-hero p.lead {
+        font-size: 1.2rem; max-width: 600px; color: var(--muted); line-height: 1.7;
+      }
+
+      @media (max-width: 900px) {
+        .nav-links { display: none; }
+        .hamburger { display: flex; }
+      }
+      @media (max-width: 600px) {
+        .container { padding: 0 1.2rem; }
+        .btn { width: 100%; justify-content: center; }
+      }
+    </style>
+
+  <style>
+    #contact { padding: 2rem 0 7rem; }
+    .contact-wrapper {
+      display: grid; grid-template-columns: 1fr 1.5fr;
+      gap: 5rem; align-items: start; margin-top: 4rem;
+    }
+    .contact-info h2 { font-size: 1.6rem; color: var(--white); margin-bottom: 1rem; font-weight: 600; }
+    .contact-detail {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.2rem; font-size: 0.92rem;
+    }
+    .detail-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: rgba(88,101,242,0.12); border: 1px solid rgba(88,101,242,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .detail-text { color: var(--muted); font-size: 0.88rem; }
+    .detail-text strong { display: block; color: var(--text); margin-bottom: 2px; }
+    .detail-text a { color: var(--accent2); text-decoration: none; }
+    .detail-text a:hover { text-decoration: underline; }
+
+    /* TEAM CARD */
+    .team-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem; margin-top: 3rem;
+      position: relative; overflow: hidden; transition: var(--tr);
+    }
+    .team-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .team-avatar {
+      width: 64px; height: 64px; border-radius: 50%; margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 1.8rem; color: #fff;
+    }
+    .team-name { font-size: 1.1rem; font-weight: 700; color: var(--white); margin-bottom: 0.2rem; }
+    .team-role { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent2); letter-spacing: 0.08em; margin-bottom: 0.8rem; }
+    .team-bio { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+
+    /* FORM */
+    .contact-form { display: flex; flex-direction: column; gap: 1.2rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.45rem; }
+    .form-label {
+      font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase;
+    }
+    .form-input, .form-select, .form-textarea {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.9rem 1rem; color: var(--text);
+      font-family: var(--font-head); font-size: 0.9rem;
+      transition: var(--tr); outline: none; appearance: none;
+      -webkit-appearance: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 4px rgba(88,101,242,0.15);
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--muted); opacity: 0.6; }
+    .form-textarea { resize: vertical; min-height: 140px; }
+    .form-select option { background: var(--bg2); }
+    .form-checkbox { display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer; }
+    .form-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+    .form-checkbox span { font-size: 0.82rem; color: var(--text); line-height: 1.5; }
+    .form-checkbox a { color: var(--accent2); text-decoration: underline; cursor: pointer; }
+    .form-success {
+      display: none; background: rgba(0,255,163,0.1); border: 1px solid rgba(0,255,163,0.3);
+      border-radius: 10px; padding: 1.2rem; color: var(--accent2);
+      font-family: var(--font-mono); font-size: 0.85rem; text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .contact-wrapper { grid-template-columns: 1fr; gap: 3rem; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="../index.html" class="nav-logo">
+      <img src="../logo.png" alt="CrashTrace Logo" />
+    </a>
+    <ul class="nav-links"><li><a href="../index.html" data-de="Start" data-en="Home">Start</a></li>
+<li><a href="../features/" data-de="Funktionen" data-en="Features">Funktionen</a></li>
+<li><a href="../editionen/" data-de="Editionen" data-en="Editions">Editionen</a></li>
+<li><a href="../kontakt/" class="active" data-de="Kontakt" data-en="Contact">Kontakt</a></li>
+</ul>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('de')">DE</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="../kontakt/" class="btn btn-primary" style="padding:0.6rem 1.3rem;font-size:0.82rem;"
+         data-de="Demo anfragen" data-en="Request Demo">Demo anfragen</a>
+      <button class="hamburger" onclick="openMobile()"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" onclick="closeMobile()">✕</button>
+  <a href="../index.html" onclick="closeMobile()" data-de="Start" data-en="Home">Start</a>
+<a href="../features/" onclick="closeMobile()" data-de="Funktionen" data-en="Features">Funktionen</a>
+<a href="../editionen/" onclick="closeMobile()" data-de="Editionen" data-en="Editions">Editionen</a>
+<a href="../kontakt/" onclick="closeMobile()" data-de="Kontakt" data-en="Contact">Kontakt</a>
+
+  <a href="../kontakt/" onclick="closeMobile()" class="btn btn-green"
+     data-de="Demo anfragen" data-en="Request Demo">Demo anfragen</a>
+</div>
+
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-glow page-hero-glow-1"></div>
+  <div class="page-hero-glow page-hero-glow-2"></div>
+  <div class="container page-hero-content">
+    <div class="label" data-de="Kontakt & Demo" data-en="Contact & Demo">Kontakt & Demo</div>
+    <h1>
+      <span data-de="Sprechen wir" data-en="Let's talk">Sprechen wir</span><br/>
+      <span data-de="über Ihr Projekt." data-en="about your project.">über Ihr Projekt.</span>
+    </h1>
+    <p class="lead" data-de="Keine Download-Links, keine Standardpreise. Jede Installation ist individuell. Kontaktieren Sie uns für ein persönliches Angebot." data-en="No download links, no standard prices. Every installation is individual. Contact us for a personal quote.">Keine Download-Links, keine Standardpreise. Jede Installation ist individuell. Kontaktieren Sie uns für ein persönliches Angebot.</p>
+  </div>
+</section>
+
+<!-- CONTACT SECTION -->
+<section id="contact">
+  <div class="container">
+    <div class="contact-wrapper">
+
+      <!-- LEFT: Info + Team -->
+      <div class="reveal">
+        <h2 data-de="Kontakt aufnehmen" data-en="Get in touch">Kontakt aufnehmen</h2>
+        <p style="margin-bottom:2rem;" data-de="Wir antworten in der Regel innerhalb von 24 Stunden auf alle Anfragen." data-en="We usually respond to all enquiries within 24 hours.">Wir antworten in der Regel innerhalb von 24 Stunden auf alle Anfragen.</p>
+
+        <div class="contact-detail">
+          <div class="detail-icon">📧</div>
+          <div class="detail-text">
+            <strong data-de="E-Mail" data-en="Email">E-Mail</strong>
+            <a href="mailto:office@crashtrace.at">office@crashtrace.at</a>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="detail-icon">🌍</div>
+          <div class="detail-text">
+            <strong data-de="Standort" data-en="Location">Standort</strong>
+            <span data-de="Österreich" data-en="Austria">Österreich</span>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="detail-icon">⏰</div>
+          <div class="detail-text">
+            <strong data-de="Antwortzeit" data-en="Response time">Antwortzeit</strong>
+            <span data-de="Innerhalb von 24 Stunden" data-en="Within 24 hours">Innerhalb von 24 Stunden</span>
+          </div>
+        </div>
+
+        <div class="team-card">
+          <div class="team-avatar">J</div>
+          <div class="team-name">Jonas Feichtinger</div>
+          <div class="team-role" data-de="GRÜNDER & DEVELOPER" data-en="FOUNDER & DEVELOPER">GRÜNDER & DEVELOPER</div>
+          <div class="team-bio" data-de="18 Jahre, HTL-Schüler mit Schwerpunkt Betriebsinformatik & Wirtschaft. Entwickler und Gründer von CrashTrace. Leidenschaftlich daran interessiert, IT-Infrastruktur robuster und beherrschbarer zu machen." data-en="18 years old, HTL student specialising in business informatics & economics. Developer and founder of CrashTrace. Passionate about making IT infrastructure more robust and manageable.">18 Jahre, HTL-Schüler mit Schwerpunkt Betriebsinformatik & Wirtschaft. Entwickler und Gründer von CrashTrace. Leidenschaftlich daran interessiert, IT-Infrastruktur robuster und beherrschbarer zu machen.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Form -->
+      <div class="reveal reveal-delay-1">
+        <form class="contact-form" action="https://formspree.io/f/DEIN_FORMSPREE_CODE" method="POST">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" data-de="Vorname" data-en="First name">Vorname</label>
+              <input type="text" class="form-input" data-de="Max" data-en="John" name="vorname" placeholder="Max" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-de="Nachname" data-en="Last name">Nachname</label>
+              <input type="text" class="form-input" data-de="Mustermann" data-en="Doe" name="nachname" placeholder="Mustermann" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-de="E-Mail-Adresse" data-en="Email address">E-Mail-Adresse</label>
+            <input type="email" class="form-input" data-de="max@firma.at" data-en="john@company.com" name="email" placeholder="max@firma.at" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-de="Unternehmen" data-en="Company">Unternehmen</label>
+            <input type="text" class="form-input" data-de="Firma GmbH (optional)" data-en="Company Ltd (optional)" name="unternehmen" placeholder="Firma GmbH (optional)"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-de="Interesse an Edition" data-en="Edition of interest">Interesse an Edition</label>
+            <select name="edition" class="form-select">
+              <option value="" data-de="Bitte wählen..." data-en="Please select...">Bitte wählen...</option>
+              <option value="basic">BASIC</option>
+              <option value="pro">PRO</option>
+              <option value="enterprise">ENTERPRISE</option>
+              <option value="unclear" data-de="Noch nicht sicher" data-en="Not yet sure">Noch nicht sicher</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-de="Nachricht" data-en="Message">Nachricht</label>
+            <textarea class="form-textarea" rows="5" data-de="Beschreiben Sie kurz Ihre Anforderungen..." data-en="Briefly describe your requirements..." name="nachricht" placeholder="Beschreiben Sie kurz Ihre Anforderungen..."></textarea>
+          </div>
+          <div class="form-checkbox">
+            <input type="checkbox" id="privacy-check" required/>
+            <label for="privacy-check">
+              Ich habe die <a href="#" onclick="event.preventDefault(); showLegal('privacy')">Datenschutzerklärung</a> gelesen und bin mit der Verarbeitung meiner Daten einverstanden.
+            </label>
+          </div>
+          <button type="submit" class="btn btn-green" id="submitBtn" data-de="Anfrage senden →" data-en="Send Request →">Anfrage senden →</button>
+          <div class="form-success" id="formSuccess"
+               data-de="✓ Danke! Wir melden uns in Kürze bei Ihnen."
+               data-en="✓ Thank you! We'll get back to you shortly.">
+            ✓ Danke! Wir melden uns in Kürze bei Ihnen.
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <img src="../logo.png" alt="CrashTrace" />
+      </div>
+      <ul class="footer-links">
+        <li><a href="#" onclick="showLegal('imprint')" data-de="Impressum" data-en="Imprint">Impressum</a></li>
+        <li><a href="#" onclick="showLegal('privacy')" data-de="Datenschutz" data-en="Privacy">Datenschutz</a></li>
+        <li><a href="#" onclick="showLegal('terms')" data-de="AGB" data-en="Terms">AGB</a></li>
+      </ul>
+      <p class="footer-copy" data-de="© 2025 CrashTrace · Jonas Feichtinger" data-en="© 2025 CrashTrace · Jonas Feichtinger">© 2025 CrashTrace · Jonas Feichtinger</p>
+    </div>
+  </div>
+</footer>
+
+
+<!-- IMPRESSUM -->
+<div class="legal-page" id="legal-imprint">
+  <button class="legal-close" onclick="hideLegal('imprint')">✕</button>
+  <div class="legal-content">
+    <div class="label">Rechtliches</div>
+    <h1 data-de="Impressum" data-en="Imprint">Impressum</h1>
+    <p data-de="Stand: 2025" data-en="As of: 2025">Stand: 2025</p>
+    <h2 data-de="Angaben gemäß § 5 ECG" data-en="Information according to § 5 ECG">Angaben gemäß § 5 ECG</h2>
+    <p data-de="Jonas Feichtinger<br>Österreich<br>E-Mail: office@crashtrace.at" data-en="Jonas Feichtinger<br>Austria<br>Email: office@crashtrace.at">Jonas Feichtinger<br>Österreich<br>E-Mail: office@crashtrace.at</p>
+    <h2 data-de="Haftungsausschluss" data-en="Disclaimer">Haftungsausschluss</h2>
+    <p data-de="Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links." data-en="Despite careful content control, we assume no liability for the content of external links.">Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links.</p>
+  </div>
+</div>
+
+<!-- DATENSCHUTZ -->
+<div class="legal-page" id="legal-privacy">
+  <button class="legal-close" onclick="hideLegal('privacy')">✕</button>
+  <div class="legal-content">
+    <div class="label">Rechtliches</div>
+    <h1 data-de="Datenschutzerklärung" data-en="Privacy Policy">Datenschutzerklärung</h1>
+    <p data-de="Stand: 2025 | CrashTrace, Jonas Feichtinger, Österreich" data-en="As of: 2025 | CrashTrace, Jonas Feichtinger, Austria">Stand: 2025 | CrashTrace, Jonas Feichtinger, Österreich</p>
+    <h2 data-de="1. Verantwortlicher" data-en="1. Controller">1. Verantwortlicher</h2>
+    <p data-de="Jonas Feichtinger, office@crashtrace.at" data-en="Jonas Feichtinger, office@crashtrace.at">Jonas Feichtinger, office@crashtrace.at</p>
+    <h2 data-de="2. Erhobene Daten" data-en="2. Data Collected">2. Erhobene Daten</h2>
+    <p data-de="Beim Absenden des Kontaktformulars werden Name, E-Mail-Adresse und Nachrichteninhalt verarbeitet. Diese Daten werden ausschließlich zur Bearbeitung Ihrer Anfrage verwendet und nicht an Dritte weitergegeben." data-en="When submitting the contact form, name, email address and message content are processed. This data is used exclusively to process your enquiry and is not passed on to third parties.">Beim Absenden des Kontaktformulars werden Name, E-Mail-Adresse und Nachrichteninhalt verarbeitet. Diese Daten werden ausschließlich zur Bearbeitung Ihrer Anfrage verwendet und nicht an Dritte weitergegeben.</p>
+    <h2 data-de="3. Keine Cloud, keine externen Server" data-en="3. No Cloud, No External Servers">3. Keine Cloud, keine externen Server</h2>
+    <p data-de="CrashTrace selbst speichert alle Daten ausschließlich lokal auf den überwachten Systemen. Es findet keine Übertragung an externe Cloud-Dienste statt." data-en="CrashTrace itself stores all data exclusively locally on the monitored systems. There is no transmission to external cloud services.">CrashTrace selbst speichert alle Daten ausschließlich lokal auf den überwachten Systemen. Es findet keine Übertragung an externe Cloud-Dienste statt.</p>
+    <h2 data-de="4. Ihre Rechte (DSGVO)" data-en="4. Your Rights (GDPR)">4. Ihre Rechte (DSGVO)</h2>
+    <ul>
+      <li data-de="Recht auf Auskunft (Art. 15 DSGVO)" data-en="Right of access (Art. 15 GDPR)">Recht auf Auskunft (Art. 15 DSGVO)</li>
+      <li data-de="Recht auf Berichtigung (Art. 16 DSGVO)" data-en="Right to rectification (Art. 16 GDPR)">Recht auf Berichtigung (Art. 16 DSGVO)</li>
+      <li data-de="Recht auf Löschung (Art. 17 DSGVO)" data-en="Right to erasure (Art. 17 GDPR)">Recht auf Löschung (Art. 17 DSGVO)</li>
+      <li data-de="Widerspruchsrecht (Art. 21 DSGVO)" data-en="Right to object (Art. 21 GDPR)">Widerspruchsrecht (Art. 21 DSGVO)</li>
+    </ul>
+    <p data-de="Zur Ausübung Ihrer Rechte: office@crashtrace.at" data-en="To exercise your rights: office@crashtrace.at">Zur Ausübung Ihrer Rechte: office@crashtrace.at</p>
+    <h2 data-de="5. Beschwerderecht" data-en="5. Right to lodge a complaint">5. Beschwerderecht</h2>
+    <p data-de="Datenschutzbehörde Österreich: dsb@dsb.gv.at" data-en="Austrian Data Protection Authority: dsb@dsb.gv.at">Datenschutzbehörde Österreich: dsb@dsb.gv.at</p>
+  </div>
+</div>
+
+<!-- AGB -->
+<div class="legal-page" id="legal-terms">
+  <button class="legal-close" onclick="hideLegal('terms')">✕</button>
+  <div class="legal-content">
+    <div class="label">Rechtliches</div>
+    <h1 data-de="Allgemeine Geschäftsbedingungen" data-en="Terms & Conditions">Allgemeine Geschäftsbedingungen</h1>
+    <p data-de="Stand: 2025 | CrashTrace, Jonas Feichtinger, Österreich" data-en="As of: 2025 | CrashTrace, Jonas Feichtinger, Austria">Stand: 2025 | CrashTrace, Jonas Feichtinger, Österreich</p>
+    <h2 data-de="§ 1 Geltungsbereich" data-en="§ 1 Scope">§ 1 Geltungsbereich</h2>
+    <p data-de="Diese AGB gelten für alle Verträge zwischen CrashTrace (Jonas Feichtinger) und dem Kunden über die Lizenzierung der Software." data-en="These Terms apply to all contracts between CrashTrace (Jonas Feichtinger) and the customer regarding the software licence.">Diese AGB gelten für alle Verträge zwischen CrashTrace (Jonas Feichtinger) und dem Kunden über die Lizenzierung der Software.</p>
+    <h2 data-de="§ 2 Vertragsgegenstand" data-en="§ 2 Subject matter">§ 2 Vertragsgegenstand</h2>
+    <p data-de="Der Anbieter überlässt dem Kunden die Software als nicht-exklusive, nicht-übertragbare Lizenz. Ein öffentlicher Download ist nicht vorgesehen." data-en="The Provider grants the customer a non-exclusive, non-transferable licence. Public download is not available.">Der Anbieter überlässt dem Kunden die Software als nicht-exklusive, nicht-übertragbare Lizenz. Ein öffentlicher Download ist nicht vorgesehen.</p>
+    <h2 data-de="§ 3 Preise und Zahlung" data-en="§ 3 Prices and payment">§ 3 Preise und Zahlung</h2>
+    <p data-de="Preise werden individuell vereinbart. Zahlung innerhalb von 14 Tagen nach Rechnungsstellung, zzgl. gesetzlicher MwSt." data-en="Prices are agreed individually. Payment within 14 days of invoicing, plus statutory VAT.">Preise werden individuell vereinbart. Zahlung innerhalb von 14 Tagen nach Rechnungsstellung, zzgl. gesetzlicher MwSt.</p>
+    <h2 data-de="§ 4 Haftungsbeschränkung" data-en="§ 4 Limitation of liability">§ 4 Haftungsbeschränkung</h2>
+    <p data-de="Die Gesamthaftung ist auf den bezahlten Lizenzbetrag begrenzt." data-en="Total liability is limited to the licence fee paid.">Die Gesamthaftung ist auf den bezahlten Lizenzbetrag begrenzt.</p>
+    <h2 data-de="§ 5 Anwendbares Recht" data-en="§ 5 Applicable law">§ 5 Anwendbares Recht</h2>
+    <p data-de="Es gilt österreichisches Recht. Gerichtsstand ist Österreich." data-en="Austrian law applies. The place of jurisdiction is Austria.">Es gilt österreichisches Recht. Gerichtsstand ist Österreich.</p>
+  </div>
+</div>
+
+
+<script>
+  let currentLang = localStorage.getItem('ct-lang') || 'de';
+
+  function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('ct-lang', lang);
+    document.querySelectorAll('.lang-btn').forEach((b,i) =>
+      b.classList.toggle('active', (lang==='de'&&i===0)||(lang==='en'&&i===1)));
+    document.querySelectorAll('[data-de]').forEach(el => {
+      const val = el.getAttribute('data-' + lang);
+      if (!val) return;
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = val;
+      else el.innerHTML = val;
+    });
+    document.documentElement.lang = lang;
+  }
+
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('solid', window.scrollY > 30);
+  });
+
+  function openMobile() {
+    document.getElementById('mobileMenu').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobile() {
+    document.getElementById('mobileMenu').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Reveal on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Legal overlays
+  function showLegal(id) {
+    document.getElementById('legal-'+id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function hideLegal(id) {
+    document.getElementById('legal-'+id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Apply saved language on load
+  setLang(currentLang);
+</script>
+
+<script>
+  function handleSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const orig = btn.textContent;
+    btn.textContent = '...'; btn.disabled = true;
+    setTimeout(() => {
+      const s = document.getElementById('formSuccess');
+      s.style.display = 'block';
+      s.textContent = s.getAttribute('data-' + currentLang);
+      e.target.reset(); btn.textContent = orig; btn.disabled = false;
+      setTimeout(() => { s.style.display = 'none'; }, 6000);
+    }, 900);
+  }
+</script>
+</body>
+</html>
